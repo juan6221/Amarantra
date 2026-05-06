@@ -19,8 +19,7 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    await new Promise(r => setTimeout(r, 600))
-    const result = login(form.email, form.password)
+    const result = await login(form.email, form.password)
     setLoading(false)
     if (result.success) {
       navigate(result.user.rol === 'admin' ? '/app/dashboard' : '/app/ventas', { replace: true })

@@ -17,8 +17,11 @@ export const useAuthStore = create(
           .eq('activo', true)
           .single()
 
+        console.log('[login] data:', data, '| error:', error)
+
         if (error || !data) {
-          return { success: false, error: 'Credenciales incorrectas o usuario inactivo' }
+          const msg = error?.message || 'Credenciales incorrectas o usuario inactivo'
+          return { success: false, error: msg }
         }
 
         set({ user: data, isAuthenticated: true })
