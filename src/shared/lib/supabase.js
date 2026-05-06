@@ -7,4 +7,16 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('Supabase env vars missing — check .env file')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  db: { schema: 'public' },
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+  global: {
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
+    },
+  },
+})
