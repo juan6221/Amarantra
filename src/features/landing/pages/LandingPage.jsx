@@ -1,13 +1,15 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppStore } from '../../../shared/store/useStore'
+import { useProductos } from '../../productos/hooks/useProductos'
+import { useCategorias } from '../../productos/hooks/useCategorias'
 import LandingNavbar from '../components/LandingNavbar'
 import ProductCard from '../components/ProductCard'
 import ProductDetailModal from '../components/ProductDetailModal'
 import AmarantaLogo from '../../../shared/components/AmarantaLogo'
 
 export default function LandingPage() {
-  const { productos, categorias } = useAppStore()
+  const { productos } = useProductos()
+  const { categorias } = useCategorias()
   const navigate = useNavigate()
   const [selectedCat, setSelectedCat] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)

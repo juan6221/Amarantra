@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react'
-import { useAppStore } from '../../../shared/store/useStore'
+import { useProductos } from '../hooks/useProductos'
+import { useCategorias } from '../hooks/useCategorias'
 import { useAuthStore } from '../../../shared/store/useStore'
 import Modal from '../../../shared/components/Modal'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
+import LoadingSpinner from '../../../shared/components/LoadingSpinner'
 
 function ImagenesInput({ imagenes, onChange }) {
   const [url, setUrl] = useState('')
@@ -84,31 +86,32 @@ function ProductoForm({ initial, categorias, onSubmit, onCancel }) {
 }
 
 export default function ProductosPage() {
-  const { productos, categorias, addProducto, updateProducto, deleteProducto } = useAppStore()
+  const { productos, loading, addProducto, updateProducto, deleteProducto } = useProductos()
+  const { categorias } = useCategorias()
   const { user } = useAuthStore()
   const isAdmin = user?.rol === 'admin'
 
-  const [search, setSearch] = useState('')
-  const [filterCat, setFilterCat] = useState('')
+  const [search, setSearch]             = useState('')
+  const [filterCat, setFilterCat]       = useState('')
   const [filterEstado, setFilterEstado] = useState('')
-  const [precioMin, setPrecioMin] = useState('')
-  const [precioMax, setPrecioMax] = useState('')
-  const [modalCreate, setModalCreate] = useState(false)
-  const [modalEdit, setModalEdit] = useState(null)
-  const [modalDetail, setModalDetail] = useState(null)
-  const [confirmDel, setConfirmDel] = useState(null)
-  const [activeImg, setActiveImg] = useState(0)
+  const [precioMin, setPrecioMin]       = useState('')
+  const [precioMax, setPrecioMax]       = useState('')
+  const [modalCreate, setModalCreate]   = useState(false)
+  const [modalEdit, setModalEdit]       = useState(null)
+  const [modalDetail, setModalDetail]   = useState(null)
+  const [confirmDel, setConfirmDel]     = useState(null)
+  const [activeImg, setActiveImg]       = useState(0)
 
   const filtered = useMemo(() => productos.filter(p => {
-    const matchSearch = p.nombre.toLowerCase().includes(search.toLowerCase())
-    const matchCat = !filterCat || p.categoriaId === +filterCat
-    const matchEstado = filterEstado === '' || (filterEstado === 'activo' ? p.activo : !p.activo)
-    const matchMin = !precioMin || p.precio >= +precioMin
-    const matchMax = !precioMax || p.precio <= +precioMax
+    const matchSearch  = p.nombre.toLowerCase().includes(search.toLowerCase())
+    const matchCat     = !filterCat || p.categoriaId === +filterCat
+    const matchEstado  = filterEstado === '' || (filterEstado === 'activo' ? p.activo : !p.activo)
+    const matchMin     = !precioMin || p.precio >= +precioMin
+    const matchMax     = !precioMax || p.precio <= +precioMax
     return matchSearch && matchCat && matchEstado && matchMin && matchMax
   }), [productos, search, filterCat, filterEstado, precioMin, precioMax])
 
-  const openDetail = (p) => { setModalDetail(p); setActiveImg(0) }
+  if (loading) return <div className="page-container"><LoadingSpinner text="Cargando productos..." /></div>
 
   return (
     <div className="page-container animate-fade-in">
@@ -119,21 +122,16 @@ export default function ProductosPage() {
         </div>
         {isAdmin && (
           <button onClick={() => setModalCreate(true)} className="btn-gold text-sm flex items-center gap-2 self-start">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Nuevo producto
           </button>
         )}
       </div>
 
-      {/* Filtros avanzados */}
       <div className="bg-dark-800 border border-dark-600 rounded-xl p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="relative lg:col-span-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input className="input-dark pl-9" placeholder="Buscar producto..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <select className="select-dark" value={filterCat} onChange={e => setFilterCat(e.target.value)}>
@@ -158,14 +156,13 @@ export default function ProductosPage() {
         )}
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map(p => {
           const cat = categorias.find(c => c.id === p.categoriaId)
           return (
             <div key={p.id}
               className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden hover:border-gold-400/40 transition-all group cursor-pointer"
-              onClick={() => openDetail(p)}>
+              onClick={() => { setModalDetail(p); setActiveImg(0) }}>
               <div className="relative h-40 bg-dark-700 overflow-hidden">
                 {p.imagenes?.[0] ? (
                   <img src={p.imagenes[0]} alt={p.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100" onError={e => { e.target.style.display = 'none' }} />
@@ -200,11 +197,10 @@ export default function ProductosPage() {
           )
         })}
         {filtered.length === 0 && (
-          <div className="col-span-full text-center py-16 text-dark-400">No se encontraron productos con esos filtros.</div>
+          <div className="col-span-full text-center py-16 text-dark-400">No se encontraron productos.</div>
         )}
       </div>
 
-      {/* Detail modal */}
       <Modal isOpen={!!modalDetail} onClose={() => setModalDetail(null)} title={modalDetail?.nombre || ''} size="lg">
         {modalDetail && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -233,7 +229,6 @@ export default function ProductosPage() {
                 <span className={modalDetail.activo ? 'badge-active' : 'badge-inactive'}>{modalDetail.activo ? 'Activo' : 'Inactivo'}</span>
                 <span className="bg-dark-600 text-dark-200 text-xs px-2 py-1 rounded-full">Stock: {modalDetail.stock}</span>
               </div>
-              <p className="text-dark-500 text-xs">Creado: {modalDetail.createdAt}</p>
             </div>
           </div>
         )}
@@ -242,10 +237,10 @@ export default function ProductosPage() {
       {isAdmin && (
         <>
           <Modal isOpen={modalCreate} onClose={() => setModalCreate(false)} title="Nuevo producto" size="lg">
-            <ProductoForm categorias={categorias} onSubmit={d => { addProducto(d); setModalCreate(false) }} onCancel={() => setModalCreate(false)} />
+            <ProductoForm categorias={categorias} onSubmit={async d => { await addProducto(d); setModalCreate(false) }} onCancel={() => setModalCreate(false)} />
           </Modal>
           <Modal isOpen={!!modalEdit} onClose={() => setModalEdit(null)} title="Editar producto" size="lg">
-            {modalEdit && <ProductoForm initial={modalEdit} categorias={categorias} onSubmit={d => { updateProducto(modalEdit.id, d); setModalEdit(null) }} onCancel={() => setModalEdit(null)} />}
+            {modalEdit && <ProductoForm initial={modalEdit} categorias={categorias} onSubmit={async d => { await updateProducto(modalEdit.id, d); setModalEdit(null) }} onCancel={() => setModalEdit(null)} />}
           </Modal>
           <ConfirmDialog
             isOpen={!!confirmDel} onClose={() => setConfirmDel(null)}
