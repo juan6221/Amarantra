@@ -17,11 +17,13 @@ export const useAuthStore = create(
           .eq('activo', true)
           .single()
 
-        console.log('[login] data:', data, '| error:', error)
-
         if (error || !data) {
-          const msg = error?.message || 'Credenciales incorrectas o usuario inactivo'
-          return { success: false, error: msg }
+          // Intentar saber si el usuario existe pero está inactivo
+          const { data: anyUser } = await supabase
+            .from('usuarios').select('activo').eq('email', email).single()
+          if (anyUser && !anyUser.activo)
+            return { success: false, error: 'Tu cuenta está desactivada. Contacta al administrador.' }
+          return { success: false, error: 'El correo o la contraseña son incorrectos. Verifica tus datos e intenta de nuevo.' }
         }
 
         set({ user: data, isAuthenticated: true })

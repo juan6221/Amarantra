@@ -6,14 +6,22 @@ import Modal from '../../../shared/components/Modal'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import LoadingSpinner from '../../../shared/components/LoadingSpinner'
 
+const PAGE_SIZE = 10
+
 function ImagenesInput({ imagenes, onChange }) {
   const [url, setUrl] = useState('')
   return (
     <div>
       <label className="block text-dark-200 text-sm font-medium mb-1">Imágenes (URLs)</label>
       <div className="flex gap-2 mb-2">
-        <input className="input-dark flex-1" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." />
-        <button type="button"
+        <input
+          className="input-dark flex-1"
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          placeholder="https://..."
+        />
+        <button
+          type="button"
           onClick={() => { if (url.trim()) { onChange([...imagenes, url.trim()]); setUrl('') } }}
           className="px-3 py-2 bg-gold-400/20 text-gold-400 border border-gold-400/30 rounded-lg text-sm hover:bg-gold-400/30 transition-all whitespace-nowrap">
           Agregar
@@ -23,7 +31,8 @@ function ImagenesInput({ imagenes, onChange }) {
         {imagenes.map((img, i) => (
           <div key={i} className="relative group">
             <img src={img} alt="" className="w-16 h-16 object-cover rounded-lg border border-dark-500" onError={e => { e.target.src = '' }} />
-            <button type="button"
+            <button
+              type="button"
               onClick={() => onChange(imagenes.filter((_, j) => j !== i))}
               className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               ×
@@ -39,13 +48,21 @@ function ProductoForm({ initial, categorias, onSubmit, onCancel }) {
   const [form, setForm] = useState(initial || {
     nombre: '', descripcion: '', precio: '', stock: '', categoriaId: categorias[0]?.id || '', imagenes: [], activo: true
   })
+  const [err, setErr] = useState('')
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setErr('')
+    const result = await onSubmit({ ...form, precio: +form.precio, stock: +form.stock, categoriaId: +form.categoriaId })
+    if (result?.error) setErr(result.error.message || 'Error al guardar.')
+  }
+
   return (
-    <form onSubmit={e => { e.preventDefault(); onSubmit({ ...form, precio: +form.precio, stock: +form.stock, categoriaId: +form.categoriaId }) }} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-dark-200 text-sm font-medium mb-1">Nombre</label>
+          <label className="block text-dark-200 text-sm font-medium mb-1">Nombre *</label>
           <input className="input-dark" value={form.nombre} onChange={e => set('nombre', e.target.value)} required placeholder="Nombre del producto" />
         </div>
         <div>
@@ -61,11 +78,11 @@ function ProductoForm({ initial, categorias, onSubmit, onCancel }) {
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div className="col-span-2">
-          <label className="block text-dark-200 text-sm font-medium mb-1">Precio (COP)</label>
+          <label className="block text-dark-200 text-sm font-medium mb-1">Precio (COP) *</label>
           <input className="input-dark" type="number" min={0} value={form.precio} onChange={e => set('precio', e.target.value)} required placeholder="0" />
         </div>
         <div>
-          <label className="block text-dark-200 text-sm font-medium mb-1">Stock</label>
+          <label className="block text-dark-200 text-sm font-medium mb-1">Stock *</label>
           <input className="input-dark" type="number" min={0} value={form.stock} onChange={e => set('stock', e.target.value)} required placeholder="0" />
         </div>
       </div>
@@ -77,6 +94,7 @@ function ProductoForm({ initial, categorias, onSubmit, onCancel }) {
           <option value="inactivo">Inactivo</option>
         </select>
       </div>
+      {err && <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/30 rounded-lg px-3 py-2">{err}</p>}
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onCancel} className="btn-outline-gold flex-1 text-sm py-2">Cancelar</button>
         <button type="submit" className="btn-gold flex-1 text-sm py-2">{initial ? 'Guardar cambios' : 'Crear producto'}</button>
@@ -96,29 +114,61 @@ export default function ProductosPage() {
   const [filterEstado, setFilterEstado] = useState('')
   const [precioMin, setPrecioMin]       = useState('')
   const [precioMax, setPrecioMax]       = useState('')
+  const [page, setPage]                 = useState(1)
   const [modalCreate, setModalCreate]   = useState(false)
   const [modalEdit, setModalEdit]       = useState(null)
   const [modalDetail, setModalDetail]   = useState(null)
+  const [confirmToggle, setConfirmToggle] = useState(null)
   const [confirmDel, setConfirmDel]     = useState(null)
   const [activeImg, setActiveImg]       = useState(0)
+  const [actionError, setActionError]   = useState('')
 
-  const filtered = useMemo(() => productos.filter(p => {
-    const matchSearch  = p.nombre.toLowerCase().includes(search.toLowerCase())
-    const matchCat     = !filterCat || p.categoriaId === +filterCat
-    const matchEstado  = filterEstado === '' || (filterEstado === 'activo' ? p.activo : !p.activo)
-    const matchMin     = !precioMin || p.precio >= +precioMin
-    const matchMax     = !precioMax || p.precio <= +precioMax
-    return matchSearch && matchCat && matchEstado && matchMin && matchMax
-  }), [productos, search, filterCat, filterEstado, precioMin, precioMax])
+  const filtered = useMemo(() => {
+    setPage(1)
+    return productos.filter(p => {
+      const matchSearch = p.nombre.toLowerCase().includes(search.toLowerCase())
+      const matchCat    = !filterCat || p.categoriaId === +filterCat
+      const matchEstado = filterEstado === '' || (filterEstado === 'activo' ? p.activo : !p.activo)
+      const matchMin    = !precioMin || p.precio >= +precioMin
+      const matchMax    = !precioMax || p.precio <= +precioMax
+      return matchSearch && matchCat && matchEstado && matchMin && matchMax
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productos, search, filterCat, filterEstado, precioMin, precioMax])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  const handleAdd = async (data) => {
+    const result = await addProducto(data)
+    if (result?.error) return result
+    setModalCreate(false)
+    return {}
+  }
+
+  const handleEdit = async (data) => {
+    const result = await updateProducto(modalEdit.id, data)
+    if (result?.error) return result
+    setModalEdit(null)
+    return {}
+  }
+
+  const handleHardDelete = async () => {
+    const result = await deleteProducto(confirmDel.id, true)
+    if (result?.error) { setActionError(result.error.message); setConfirmDel(null) }
+  }
 
   if (loading) return <div className="page-container"><LoadingSpinner text="Cargando productos..." /></div>
 
   return (
     <div className="page-container animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="font-serif text-2xl font-bold text-white">Productos</h1>
-          <p className="text-dark-300 text-sm mt-1">{productos.filter(p => p.activo).length} productos activos</p>
+          <p className="text-dark-300 text-sm mt-1">
+            {productos.filter(p => p.activo).length} activos · {filtered.length} resultados
+          </p>
         </div>
         {isAdmin && (
           <button onClick={() => setModalCreate(true)} className="btn-gold text-sm flex items-center gap-2 self-start">
@@ -128,6 +178,15 @@ export default function ProductosPage() {
         )}
       </div>
 
+      {/* Error Banner */}
+      {actionError && (
+        <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg flex items-center justify-between">
+          {actionError}
+          <button onClick={() => setActionError('')} className="ml-2 text-lg leading-none">✕</button>
+        </div>
+      )}
+
+      {/* Filtros */}
       <div className="bg-dark-800 border border-dark-600 rounded-xl p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="relative">
@@ -149,18 +208,21 @@ export default function ProductosPage() {
           </div>
         </div>
         {(search || filterCat || filterEstado || precioMin || precioMax) && (
-          <button onClick={() => { setSearch(''); setFilterCat(''); setFilterEstado(''); setPrecioMin(''); setPrecioMax('') }}
+          <button
+            onClick={() => { setSearch(''); setFilterCat(''); setFilterEstado(''); setPrecioMin(''); setPrecioMax('') }}
             className="mt-3 text-gold-400/70 hover:text-gold-400 text-xs underline transition-colors">
             Limpiar filtros
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filtered.map(p => {
+      {/* Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+        {paginated.map(p => {
           const cat = categorias.find(c => c.id === p.categoriaId)
           return (
-            <div key={p.id}
+            <div
+              key={p.id}
               className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden hover:border-gold-400/40 transition-all group cursor-pointer"
               onClick={() => { setModalDetail(p); setActiveImg(0) }}>
               <div className="relative h-40 bg-dark-700 overflow-hidden">
@@ -187,28 +249,83 @@ export default function ProductosPage() {
                   <span className="text-dark-400 text-xs">Stock: {p.stock}</span>
                 </div>
                 {isAdmin && (
-                  <div className="flex gap-2 mt-3 pt-3 border-t border-dark-600" onClick={e => e.stopPropagation()}>
+                  <div className="flex gap-1.5 mt-3 pt-3 border-t border-dark-600" onClick={e => e.stopPropagation()}>
                     <button onClick={() => setModalEdit(p)} className="flex-1 border border-gold-400/30 text-gold-400 text-xs py-1.5 rounded-lg hover:bg-gold-400/10 transition-all">Editar</button>
-                    <button onClick={() => setConfirmDel(p)} className="flex-1 border border-red-500/30 text-red-400 text-xs py-1.5 rounded-lg hover:bg-red-500/10 transition-all">{p.activo ? 'Desactivar' : 'Activar'}</button>
+                    <button onClick={() => setConfirmToggle(p)} className="flex-1 border border-amber-400/30 text-amber-400 text-xs py-1.5 rounded-lg hover:bg-amber-400/10 transition-all">
+                      {p.activo ? 'Desact.' : 'Activar'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDel(p)}
+                      className="p-1.5 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10 transition-all"
+                      title="Eliminar permanentemente">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
                   </div>
                 )}
               </div>
             </div>
           )
         })}
-        {filtered.length === 0 && (
+        {paginated.length === 0 && (
           <div className="col-span-full text-center py-16 text-dark-400">No se encontraron productos.</div>
         )}
       </div>
 
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-2">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-2 rounded-lg border border-dark-600 text-dark-300 hover:border-gold-400/40 hover:text-gold-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm">
+            ← Anterior
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+            .reduce((acc, n, idx, arr) => {
+              if (idx > 0 && n - arr[idx - 1] > 1) acc.push('...')
+              acc.push(n)
+              return acc
+            }, [])
+            .map((n, i) =>
+              n === '...'
+                ? <span key={`e${i}`} className="px-2 text-dark-500">…</span>
+                : (
+                  <button
+                    key={n}
+                    onClick={() => setPage(n)}
+                    className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${page === n ? 'bg-gold-gradient text-dark-900' : 'border border-dark-600 text-dark-300 hover:border-gold-400/40 hover:text-gold-400'}`}>
+                    {n}
+                  </button>
+                )
+            )
+          }
+
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-2 rounded-lg border border-dark-600 text-dark-300 hover:border-gold-400/40 hover:text-gold-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm">
+            Siguiente →
+          </button>
+        </div>
+      )}
+      {filtered.length > 0 && (
+        <p className="text-center text-dark-500 text-xs mt-2">
+          Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length} productos
+        </p>
+      )}
+
+      {/* Detail Modal */}
       <Modal isOpen={!!modalDetail} onClose={() => setModalDetail(null)} title={modalDetail?.nombre || ''} size="lg">
         {modalDetail && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div className="aspect-square rounded-xl overflow-hidden bg-dark-800 mb-3">
-                {modalDetail.imagenes?.[activeImg] && (
-                  <img src={modalDetail.imagenes[activeImg]} alt="" className="w-full h-full object-cover" onError={e => { e.target.src = '' }} />
-                )}
+                {modalDetail.imagenes?.[activeImg]
+                  ? <img src={modalDetail.imagenes[activeImg]} alt="" className="w-full h-full object-cover" onError={e => { e.target.src = '' }} />
+                  : <div className="w-full h-full flex items-center justify-center text-dark-600"><svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>
+                }
               </div>
               {modalDetail.imagenes?.length > 1 && (
                 <div className="flex gap-2 flex-wrap">
@@ -237,18 +354,30 @@ export default function ProductosPage() {
       {isAdmin && (
         <>
           <Modal isOpen={modalCreate} onClose={() => setModalCreate(false)} title="Nuevo producto" size="lg">
-            <ProductoForm categorias={categorias} onSubmit={async d => { await addProducto(d); setModalCreate(false) }} onCancel={() => setModalCreate(false)} />
+            <ProductoForm categorias={categorias} onSubmit={handleAdd} onCancel={() => setModalCreate(false)} />
           </Modal>
           <Modal isOpen={!!modalEdit} onClose={() => setModalEdit(null)} title="Editar producto" size="lg">
-            {modalEdit && <ProductoForm initial={modalEdit} categorias={categorias} onSubmit={async d => { await updateProducto(modalEdit.id, d); setModalEdit(null) }} onCancel={() => setModalEdit(null)} />}
+            {modalEdit && <ProductoForm initial={modalEdit} categorias={categorias} onSubmit={handleEdit} onCancel={() => setModalEdit(null)} />}
           </Modal>
+
+          {/* Activar / Desactivar */}
+          <ConfirmDialog
+            isOpen={!!confirmToggle} onClose={() => setConfirmToggle(null)}
+            onConfirm={async () => { await updateProducto(confirmToggle.id, { activo: !confirmToggle.activo }); setConfirmToggle(null) }}
+            title={`${confirmToggle?.activo ? 'Desactivar' : 'Activar'} producto`}
+            message={`¿Deseas ${confirmToggle?.activo ? 'desactivar' : 'activar'} "${confirmToggle?.nombre}"?`}
+            confirmText={confirmToggle?.activo ? 'Desactivar' : 'Activar'}
+            danger={confirmToggle?.activo}
+          />
+
+          {/* Eliminar permanente */}
           <ConfirmDialog
             isOpen={!!confirmDel} onClose={() => setConfirmDel(null)}
-            onConfirm={() => confirmDel && (confirmDel.activo ? deleteProducto(confirmDel.id) : updateProducto(confirmDel.id, { activo: true }))}
-            title={`${confirmDel?.activo ? 'Desactivar' : 'Activar'} producto`}
-            message={`¿Deseas ${confirmDel?.activo ? 'desactivar' : 'activar'} "${confirmDel?.nombre}"?`}
-            confirmText={confirmDel?.activo ? 'Desactivar' : 'Activar'}
-            danger={confirmDel?.activo}
+            onConfirm={handleHardDelete}
+            title="Eliminar producto"
+            message={`¿Eliminar permanentemente "${confirmDel?.nombre}"? Solo es posible si no ha sido vendido.`}
+            confirmText="Eliminar"
+            danger
           />
         </>
       )}

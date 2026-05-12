@@ -2,19 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useStore'
 import AmarantaLogo from './AmarantaLogo'
 
-const NAV_ADMIN = [
-  { to: '/app/dashboard', icon: ChartIcon, label: 'Dashboard' },
-  { to: '/app/usuarios', icon: UsersIcon, label: 'Usuarios' },
-  { to: '/app/categorias', icon: TagIcon, label: 'Categorías' },
-  { to: '/app/productos', icon: BoxIcon, label: 'Productos' },
-  { to: '/app/ventas', icon: CartIcon, label: 'Ventas' },
-]
-
-const NAV_TENDERO = [
-  { to: '/app/ventas', icon: CartIcon, label: 'Nueva Venta' },
-  { to: '/app/productos', icon: BoxIcon, label: 'Catálogo' },
-]
-
+/* ─── Icons ─── */
 function ChartIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -26,6 +14,13 @@ function UsersIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  )
+}
+function ShieldIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
     </svg>
   )
 }
@@ -50,6 +45,36 @@ function CartIcon() {
     </svg>
   )
 }
+function ClientesIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )
+}
+function UserCircleIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+/* ─── Nav config ─── */
+const NAV_ADMIN = [
+  { to: '/app/dashboard', icon: ChartIcon,     label: 'Dashboard' },
+  { to: '/app/usuarios',  icon: UsersIcon,     label: 'Usuarios' },
+  { to: '/app/roles',     icon: ShieldIcon,    label: 'Roles' },
+  { to: '/app/clientes',  icon: ClientesIcon,  label: 'Clientes' },
+  { to: '/app/categorias',icon: TagIcon,       label: 'Categorías' },
+  { to: '/app/productos', icon: BoxIcon,       label: 'Productos' },
+  { to: '/app/ventas',    icon: CartIcon,      label: 'Ventas' },
+]
+
+const NAV_TENDERO = [
+  { to: '/app/ventas',    icon: CartIcon,      label: 'Nueva Venta' },
+  { to: '/app/productos', icon: BoxIcon,       label: 'Catálogo' },
+]
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuthStore()
@@ -81,29 +106,40 @@ export default function Sidebar({ isOpen, onClose }) {
 
         {/* Usuario */}
         <div className="px-4 py-4 border-b border-dark-600">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gold-gradient flex items-center justify-center text-dark-900 font-bold text-sm">
+          <NavLink to="/app/perfil" onClick={onClose} className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-full bg-gold-gradient flex items-center justify-center text-dark-900 font-bold text-sm flex-shrink-0">
               {user?.nombre?.charAt(0) || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">{user?.nombre}</p>
+              <p className="text-white text-sm font-medium truncate group-hover:text-gold-400 transition-colors">{user?.nombre}</p>
               <p className="text-dark-300 text-xs capitalize">{user?.rol}</p>
             </div>
-          </div>
+            <svg className="w-4 h-4 text-dark-500 group-hover:text-gold-400 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </NavLink>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {nav.map(({ to, icon: Icon, label }) => (
             <NavLink key={to} to={to} onClick={onClose}
-              className={({ isActive }) =>
-                `sidebar-item ${isActive ? 'active' : ''}`
-              }
+              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             >
               <Icon />
               {label}
             </NavLink>
           ))}
+
+          {/* Perfil */}
+          <div className="pt-2 mt-2 border-t border-dark-600">
+            <NavLink to="/app/perfil" onClick={onClose}
+              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+            >
+              <UserCircleIcon />
+              Mi perfil
+            </NavLink>
+          </div>
         </nav>
 
         {/* Logout */}

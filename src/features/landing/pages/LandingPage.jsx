@@ -7,21 +7,33 @@ import ProductCard from '../components/ProductCard'
 import ProductDetailModal from '../components/ProductDetailModal'
 import AmarantaLogo from '../../../shared/components/AmarantaLogo'
 
+const LANDING_PAGE_SIZE = 8
+
 export default function LandingPage() {
   const { productos } = useProductos()
   const { categorias } = useCategorias()
   const navigate = useNavigate()
-  const [selectedCat, setSelectedCat] = useState(null)
+  const [selectedCat, setSelectedCat]     = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const [modalOpen, setModalOpen] = useState(false)
+  const [modalOpen, setModalOpen]         = useState(false)
+  const [page, setPage]                   = useState(1)
 
   const activeCats = categorias.filter(c => c.activo)
-  const productosVisibles = useMemo(() =>
-    productos.filter(p => p.activo && (selectedCat === null || p.categoriaId === selectedCat)),
-    [productos, selectedCat]
-  )
+
+  const productosVisibles = useMemo(() => {
+    setPage(1)
+    return productos.filter(p => p.activo && (selectedCat === null || p.categoriaId === selectedCat))
+  }, [productos, selectedCat])
+
+  const totalPages = Math.max(1, Math.ceil(productosVisibles.length / LANDING_PAGE_SIZE))
+  const paginated  = productosVisibles.slice((page - 1) * LANDING_PAGE_SIZE, page * LANDING_PAGE_SIZE)
 
   const openProduct = (p) => { setSelectedProduct(p); setModalOpen(true) }
+
+  const handleCatChange = (catId) => {
+    setSelectedCat(catId)
+    setPage(1)
+  }
 
   return (
     <div className="min-h-screen bg-dark-900">
@@ -29,12 +41,10 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Fondo gradiente */}
         <div className="absolute inset-0 bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900" />
         <div className="absolute inset-0 opacity-20"
           style={{ backgroundImage: 'radial-gradient(ellipse at 30% 50%, #d4af3720 0%, transparent 60%), radial-gradient(ellipse at 70% 30%, #b8960c15 0%, transparent 50%)' }}
         />
-        {/* Ornamentos decorativos */}
         <div className="absolute top-1/4 left-10 w-px h-40 bg-gradient-to-b from-transparent via-gold-400/30 to-transparent hidden lg:block" />
         <div className="absolute top-1/4 right-10 w-px h-40 bg-gradient-to-b from-transparent via-gold-400/30 to-transparent hidden lg:block" />
 
@@ -52,7 +62,7 @@ export default function LandingPage() {
             </span>
           </h1>
           <p className="text-dark-200 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            Descubre nuestra curaduría de puros premium, ediciones limitadas y accesorios de alta gama. 
+            Descubre nuestra curaduría de puros premium, ediciones limitadas y accesorios de alta gama.
             Cada cigarro, una obra maestra de la tradición.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -65,7 +75,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
           <svg className="w-6 h-6 text-gold-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -79,7 +88,7 @@ export default function LandingPage() {
           {[
             { value: '+200', label: 'Productos Exclusivos' },
             { value: '+500', label: 'Clientes Satisfechos' },
-            { value: '8', label: 'Años de Tradición' },
+            { value: '8',    label: 'Años de Tradición' },
             { value: '100%', label: 'Artesanal & Premium' },
           ].map((stat, i) => (
             <div key={i}>
@@ -102,34 +111,30 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Filtros */}
+        {/* Filtros por categoría */}
         <div className="flex flex-wrap gap-3 justify-center mb-10">
           <button
-            onClick={() => setSelectedCat(null)}
+            onClick={() => handleCatChange(null)}
             className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${selectedCat === null
-                ? 'bg-gold-gradient text-dark-900'
-                : 'border border-dark-500 text-dark-300 hover:border-gold-400/50 hover:text-gold-400'
-              }`}
-          >
+              ? 'bg-gold-gradient text-dark-900'
+              : 'border border-dark-500 text-dark-300 hover:border-gold-400/50 hover:text-gold-400'}`}>
             Todos
           </button>
           {activeCats.map(cat => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCat(cat.id)}
+              onClick={() => handleCatChange(cat.id)}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${selectedCat === cat.id
-                  ? 'bg-gold-gradient text-dark-900'
-                  : 'border border-dark-500 text-dark-300 hover:border-gold-400/50 hover:text-gold-400'
-                }`}
-            >
+                ? 'bg-gold-gradient text-dark-900'
+                : 'border border-dark-500 text-dark-300 hover:border-gold-400/50 hover:text-gold-400'}`}>
               {cat.nombre}
             </button>
           ))}
         </div>
 
         {/* Grid productos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {productosVisibles.map(p => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
+          {paginated.map(p => (
             <ProductCard key={p.id} producto={p} categorias={categorias} onClick={openProduct} />
           ))}
           {productosVisibles.length === 0 && (
@@ -138,6 +143,56 @@ export default function LandingPage() {
             </div>
           )}
         </div>
+
+        {/* Paginación landing */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 rounded-full border border-dark-500 text-dark-300 hover:border-gold-400/50 hover:text-gold-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm">
+              ← Anterior
+            </button>
+
+            <div className="flex gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                .reduce((acc, n, idx, arr) => {
+                  if (idx > 0 && n - arr[idx - 1] > 1) acc.push('...')
+                  acc.push(n)
+                  return acc
+                }, [])
+                .map((n, i) =>
+                  n === '...'
+                    ? <span key={`e${i}`} className="px-2 text-dark-500 self-center">…</span>
+                    : (
+                      <button
+                        key={n}
+                        onClick={() => setPage(n)}
+                        className={`w-9 h-9 rounded-full text-sm font-medium transition-all ${page === n
+                          ? 'bg-gold-gradient text-dark-900'
+                          : 'border border-dark-500 text-dark-300 hover:border-gold-400/50 hover:text-gold-400'}`}>
+                        {n}
+                      </button>
+                    )
+                )
+              }
+            </div>
+
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 rounded-full border border-dark-500 text-dark-300 hover:border-gold-400/50 hover:text-gold-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm">
+              Siguiente →
+            </button>
+          </div>
+        )}
+
+        {productosVisibles.length > 0 && (
+          <p className="text-center text-dark-500 text-xs mt-3">
+            {(page - 1) * LANDING_PAGE_SIZE + 1}–{Math.min(page * LANDING_PAGE_SIZE, productosVisibles.length)} de {productosVisibles.length} productos
+          </p>
+        )}
       </section>
 
       {/* NOSOTROS */}
