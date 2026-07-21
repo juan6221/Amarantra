@@ -3,8 +3,8 @@ import { useProductos } from '../../productos/hooks/useProductos'
 import { useCategorias } from '../../productos/hooks/useCategorias'
 import { useUsuarios } from '../../usuarios/hooks/useUsuarios'
 import { useVentas } from '../../ventas/hooks/useVentas'
-import { useAuthStore } from '../../../shared/store/useStore'
-import LoadingSpinner from '../../../shared/components/LoadingSpinner'
+import { useAuthStore } from '../../../store/useStore'
+import LoadingSpinner from '../../../components/LoadingSpinner'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -190,3 +190,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+

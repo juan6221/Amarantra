@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../../../shared/lib/supabase'
+import { get, post, put, del } from '../../../lib/api'
 
 export function useRoles() {
   const [roles, setRoles]     = useState([])
@@ -8,41 +8,61 @@ export function useRoles() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('roles').select('*').order('id')
-    if (error) setError(error.message)
-    else setRoles(data || [])
+    try {
+      const data = await get('/api/roles')
+      setRoles(data || [])
+      setError(null)
+    } catch (err) {
+      setError(err.message)
+    }
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
   const addRol = async (rol) => {
-    // Validar duplicado
-    const exists = roles.some(r => r.nombre.toLowerCase() === rol.nombre.toLowerCase())
-    if (exists) return { error: { message: 'Ya existe un rol con ese nombre' } }
-    const { data, error } = await supabase.from('roles').insert({ ...rol, created_at: new Date().toISOString().split('T')[0] }).select().single()
-    if (!error && data) setRoles(prev => [...prev, data])
-    return { error }
+    if (roles.some(r => r.nombre.toLowerCase() === rol.nombre.toLowerCase())) {
+      return { error: { message: 'Ya existe un rol con ese nombre' } }
+    }
+    try {
+      const data = await post('/api/roles', rol)
+      setRoles(prev => [...prev, data])
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err.message } }
+    }
   }
 
   const updateRol = async (id, updates) => {
-    const exists = roles.some(r => r.nombre.toLowerCase() === updates.nombre?.toLowerCase() && r.id !== id)
-    if (exists) return { error: { message: 'Ya existe un rol con ese nombre' } }
-    const { error } = await supabase.from('roles').update(updates).eq('id', id)
-    if (!error) setRoles(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r))
-    return { error }
+    if (updates.nombre && roles.some(r => r.nombre.toLowerCase() === updates.nombre.trim().toLowerCase() && r.id !== id)) {
+      return { error: { message: 'Ya existe un rol con ese nombre' } }
+    }
+    try {
+      await put(`/api/roles/${id}`, updates)
+      setRoles(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r))
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err.message } }
+    }
   }
 
   const deleteRol = async (id) => {
-    // Verificar si hay usuarios con este rol
     const rol = roles.find(r => r.id === id)
     if (!rol) return { error: { message: 'Rol no encontrado' } }
-    const { count } = await supabase.from('usuarios').select('id', { count: 'exact', head: true }).eq('rol', rol.nombre)
-    if (count > 0) return { error: { message: `No se puede eliminar: ${count} usuario(s) tienen este rol` } }
-    const { error } = await supabase.from('roles').delete().eq('id', id)
-    if (!error) setRoles(prev => prev.filter(r => r.id !== id))
-    return { error }
+
+    try {
+      const usuarios = await get('/api/usuarios')
+      const count = (usuarios || []).filter(u => u.rol === rol.nombre).length
+      if (count > 0) return { error: { message: `No se puede eliminar: ${count} usuario(s) tienen este rol` } }
+      await del(`/api/roles/${id}`)
+      setRoles(prev => prev.filter(r => r.id !== id))
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err.message } }
+    }
   }
 
   return { roles, loading, error, addRol, updateRol, deleteRol, refetch: fetchAll }
 }
+
+

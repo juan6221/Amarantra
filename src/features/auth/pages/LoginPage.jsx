@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuthStore } from '../../../shared/store/useStore'
-import AmarantaLogo from '../../../shared/components/AmarantaLogo'
+import { useAuthStore } from '../../../store/useStore'
+import AmarantaLogo from '../../../components/AmarantaLogo'
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -136,3 +136,5 @@ export default function LoginPage() {
     </div>
   )
 }
+
+

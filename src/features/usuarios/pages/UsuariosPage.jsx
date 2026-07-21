@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useUsuarios } from '../hooks/useUsuarios'
 import { useRoles } from '../../roles/hooks/useRoles'
-import Modal from '../../../shared/components/Modal'
-import ConfirmDialog from '../../../shared/components/ConfirmDialog'
-import LoadingSpinner from '../../../shared/components/LoadingSpinner'
+import Modal from '../../../components/Modal'
+import ConfirmDialog from '../../../components/ConfirmDialog'
+import LoadingSpinner from '../../../components/LoadingSpinner'
 
 function UsuarioForm({ initial, roles, onSubmit, onCancel }) {
   const [form, setForm] = useState(initial || { nombre: '', email: '', password: '', rol: roles[0]?.nombre || 'tendero', telefono: '', activo: true })
@@ -258,3 +258,5 @@ export default function UsuariosPage() {
     </div>
   )
 }
+
+

@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useAuthStore } from '../../../shared/store/useStore'
-import { supabase } from '../../../shared/lib/supabase'
+import { useAuthStore } from '../../../store/useStore'
+import { put } from '../../../lib/api'
 
 export default function PerfilPage() {
-  const { user, login } = useAuthStore()
+  const { user } = useAuthStore()
   const [form, setForm]         = useState({
     nombre:   user?.nombre   || '',
     email:    user?.email    || '',
@@ -24,35 +24,21 @@ export default function PerfilPage() {
     setSaving(true)
     setMsg(null)
 
-    // Verificar email duplicado si cambió
-    if (form.email.toLowerCase() !== user.email.toLowerCase()) {
-      const { data: dup } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('email', form.email.toLowerCase())
-        .neq('id', user.id)
-        .single()
-      if (dup) {
-        setMsg({ type: 'error', text: 'Ese correo ya está en uso por otro usuario.' })
-        setSaving(false)
-        return
-      }
-    }
+    try {
+      await put('/api/perfil', {
+        nombre: form.nombre.trim(),
+        email: form.email.toLowerCase().trim(),
+        telefono: form.telefono.trim(),
+      })
 
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ nombre: form.nombre.trim(), email: form.email.toLowerCase().trim(), telefono: form.telefono.trim() })
-      .eq('id', user.id)
-
-    if (error) {
-      setMsg({ type: 'error', text: error.message })
-    } else {
-      // Refrescar sesión en el store con los nuevos datos
       useAuthStore.setState(s => ({
         user: { ...s.user, nombre: form.nombre.trim(), email: form.email.toLowerCase().trim(), telefono: form.telefono.trim() }
       }))
       setMsg({ type: 'ok', text: 'Datos actualizados correctamente.' })
+    } catch (err) {
+      setMsg({ type: 'error', text: err.message })
     }
+
     setSaving(false)
   }
 
@@ -73,31 +59,17 @@ export default function PerfilPage() {
       return
     }
 
-    // Verificar contraseña actual
-    const { data: check } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('id', user.id)
-      .eq('password', pwForm.actual)
-      .single()
-
-    if (!check) {
-      setMsgPw({ type: 'error', text: 'La contraseña actual es incorrecta.' })
-      setSavingPw(false)
-      return
-    }
-
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ password: pwForm.nueva })
-      .eq('id', user.id)
-
-    if (error) {
-      setMsgPw({ type: 'error', text: error.message })
-    } else {
+    try {
+      await put('/api/perfil', {
+        currentPassword: pwForm.actual,
+        password: pwForm.nueva,
+      })
       setPwForm({ actual: '', nueva: '', confirmar: '' })
       setMsgPw({ type: 'ok', text: 'Contraseña actualizada correctamente.' })
+    } catch (err) {
+      setMsgPw({ type: 'error', text: err.message })
     }
+
     setSavingPw(false)
   }
 
@@ -238,3 +210,5 @@ export default function PerfilPage() {
     </div>
   )
 }
+
+

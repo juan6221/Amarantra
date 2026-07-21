@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useClientes } from '../hooks/useClientes'
-import Modal from '../../../shared/components/Modal'
-import ConfirmDialog from '../../../shared/components/ConfirmDialog'
-import LoadingSpinner from '../../../shared/components/LoadingSpinner'
+import Modal from '../../../components/Modal'
+import ConfirmDialog from '../../../components/ConfirmDialog'
+import LoadingSpinner from '../../../components/LoadingSpinner'
 
 function ClienteForm({ initial, onSubmit, onCancel }) {
   const [form, setForm] = useState(initial || { nombre: '', email: '', telefono: '', direccion: '', activo: true })
@@ -209,3 +209,5 @@ export default function ClientesPage() {
     </div>
   )
 }
+
+

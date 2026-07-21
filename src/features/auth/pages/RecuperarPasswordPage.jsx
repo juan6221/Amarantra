@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../../../shared/lib/supabase'
-import AmarantaLogo from '../../../shared/components/AmarantaLogo'
+import { post, put } from '../../../lib/api'
+import AmarantaLogo from '../../../components/AmarantaLogo'
 
 export default function RecuperarPasswordPage() {
   const [step, setStep]       = useState('email') // email | nueva
   const [email, setEmail]     = useState('')
-  const [userId, setUserId]   = useState(null)
   const [password, setPassword]   = useState('')
   const [password2, setPassword2] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,18 +14,15 @@ export default function RecuperarPasswordPage() {
 
   const handleEmail = async (e) => {
     e.preventDefault(); setError(''); setLoading(true)
-    const { data } = await supabase.from('usuarios').select('id, nombre, activo').eq('email', email.trim()).single()
+
+    try {
+      await post('/api/auth/recover-password', { email: email.trim() })
+      setStep('nueva')
+    } catch (err) {
+      setError(err.message || 'No encontramos ninguna cuenta asociada a ese correo electrónico.')
+    }
+
     setLoading(false)
-    if (!data) {
-      setError('No encontramos ninguna cuenta asociada a ese correo electrónico.')
-      return
-    }
-    if (!data.activo) {
-      setError('Esta cuenta está desactivada. Contacta al administrador.')
-      return
-    }
-    setUserId(data.id)
-    setStep('nueva')
   }
 
   const handleReset = async (e) => {
@@ -34,10 +30,15 @@ export default function RecuperarPasswordPage() {
     if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres.'); return }
     if (password !== password2) { setError('Las contraseñas no coinciden.'); return }
     setLoading(true)
-    const { error } = await supabase.from('usuarios').update({ password }).eq('id', userId)
+
+    try {
+      await put('/api/auth/recover-password', { email: email.trim(), password })
+      setSuccess(true)
+    } catch (err) {
+      setError(err.message || 'Error al actualizar la contraseña. Intenta de nuevo.')
+    }
+
     setLoading(false)
-    if (error) { setError('Error al actualizar la contraseña. Intenta de nuevo.'); return }
-    setSuccess(true)
   }
 
   return (
@@ -101,3 +102,5 @@ export default function RecuperarPasswordPage() {
     </div>
   )
 }
+
+

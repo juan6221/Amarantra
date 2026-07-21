@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useProductos } from '../hooks/useProductos'
 import { useCategorias } from '../hooks/useCategorias'
-import { useAuthStore } from '../../../shared/store/useStore'
-import Modal from '../../../shared/components/Modal'
-import ConfirmDialog from '../../../shared/components/ConfirmDialog'
-import LoadingSpinner from '../../../shared/components/LoadingSpinner'
+import { useAuthStore } from '../../../store/useStore'
+import Modal from '../../../components/Modal'
+import ConfirmDialog from '../../../components/ConfirmDialog'
+import LoadingSpinner from '../../../components/LoadingSpinner'
 
 const PAGE_SIZE = 10
 
@@ -384,3 +384,5 @@ export default function ProductosPage() {
     </div>
   )
 }
+
+

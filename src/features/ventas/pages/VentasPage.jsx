@@ -3,10 +3,10 @@ import { useVentas } from '../hooks/useVentas'
 import { useProductos } from '../../productos/hooks/useProductos'
 import { useCategorias } from '../../productos/hooks/useCategorias'
 import { useClientes } from '../../clientes/hooks/useClientes'
-import { useAuthStore } from '../../../shared/store/useStore'
-import Modal from '../../../shared/components/Modal'
-import LoadingSpinner from '../../../shared/components/LoadingSpinner'
-import { generarFacturaPDF } from '../../../shared/components/generarFactura'
+import { useAuthStore } from '../../../store/useStore'
+import Modal from '../../../components/Modal'
+import LoadingSpinner from '../../../components/LoadingSpinner'
+import { generarFacturaPDF } from '../../../utils/generarFactura'
 
 function CarritoItem({ item, producto, onUpdate, onRemove }) {
   return (
@@ -303,3 +303,5 @@ export default function VentasPage() {
     </div>
   )
 }
+
+

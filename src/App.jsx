@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useAuthStore } from './shared/store/useStore'
+import { useAuthStore } from './store/useStore'
 
 import LandingPage          from './features/landing/pages/LandingPage'
 import LoginPage            from './features/auth/pages/LoginPage'
 import RecuperarPasswordPage from './features/auth/pages/RecuperarPasswordPage'
-import AppLayout            from './shared/components/AppLayout'
-import ProtectedRoute       from './shared/components/ProtectedRoute'
+import AppLayout            from './components/AppLayout'
+import ProtectedRoute       from './components/ProtectedRoute'
 import DashboardPage        from './features/dashboard/pages/DashboardPage'
 import UsuariosPage         from './features/usuarios/pages/UsuariosPage'
 import RolesPage            from './features/roles/pages/RolesPage'
@@ -67,3 +67,5 @@ export default function App() {
     </BrowserRouter>
   )
 }
+
+

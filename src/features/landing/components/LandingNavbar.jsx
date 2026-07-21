@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import AmarantaLogo from '../../../shared/components/AmarantaLogo'
+import AmarantaLogo from '../../../components/AmarantaLogo'
 
 export default function LandingNavbar() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -50,3 +50,5 @@ export default function LandingNavbar() {
     </nav>
   )
 }
+
+

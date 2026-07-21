@@ -5,7 +5,7 @@ import { useCategorias } from '../../productos/hooks/useCategorias'
 import LandingNavbar from '../components/LandingNavbar'
 import ProductCard from '../components/ProductCard'
 import ProductDetailModal from '../components/ProductDetailModal'
-import AmarantaLogo from '../../../shared/components/AmarantaLogo'
+import AmarantaLogo from '../../../components/AmarantaLogo'
 
 const LANDING_PAGE_SIZE = 8
 
@@ -266,3 +266,5 @@ export default function LandingPage() {
     </div>
   )
 }
+
+

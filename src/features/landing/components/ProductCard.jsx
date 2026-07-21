@@ -55,3 +55,5 @@ export default function ProductCard({ producto, categorias = [], onClick }) {
     </div>
   )
 }
+
+

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../../../shared/lib/supabase'
+import { get, post, put, del } from '../../../lib/api'
 
 export function useProductos() {
   const [productos, setProductos] = useState([])
@@ -8,18 +8,17 @@ export function useProductos() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('productos')
-      .select('*')
-      .order('id')
-    if (error) setError(error.message)
-    else {
+    try {
+      const data = await get('/api/productos')
       setProductos((data || []).map(p => ({
         ...p,
-        categoriaId: p.categoria_id,
-        createdAt:   p.created_at,
+        categoriaId: p.categoria?._id || p.categoriaId,
+        createdAt:   p.createdAt || p.created_at,
         imagenes:    p.imagenes || [],
       })))
+      setError(null)
+    } catch (err) {
+      setError(err.message)
     }
     setLoading(false)
   }, [])
@@ -27,57 +26,61 @@ export function useProductos() {
   useEffect(() => { fetchAll() }, [fetchAll])
 
   const addProducto = async (prod) => {
-    // Validar nombre duplicado
     const dup = productos.some(p => p.nombre.toLowerCase() === prod.nombre.trim().toLowerCase())
     if (dup) return { error: { message: 'Ya existe un producto con ese nombre.' } }
 
-    const { categoriaId, createdAt, ...rest } = prod
-    const { data, error } = await supabase
-      .from('productos')
-      .insert({ ...rest, nombre: prod.nombre.trim(), categoria_id: categoriaId || prod.categoriaId, created_at: new Date().toISOString().split('T')[0] })
-      .select()
-      .single()
-    if (!error && data) {
-      setProductos(prev => [...prev, { ...data, categoriaId: data.categoria_id, createdAt: data.created_at, imagenes: data.imagenes || [] }])
+    try {
+      const payload = {
+        ...prod,
+        nombre: prod.nombre.trim(),
+        categoria: prod.categoriaId || prod.categoria,
+      }
+      const data = await post('/api/productos', payload)
+      setProductos(prev => [...prev, {
+        ...data,
+        categoriaId: data.categoria?._id,
+        createdAt: data.createdAt,
+        imagenes: data.imagenes || [],
+      }])
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err.message } }
     }
-    return { error }
   }
 
   const updateProducto = async (id, updates) => {
-    // Validar nombre duplicado al editar
     if (updates.nombre) {
       const dup = productos.some(p => p.id !== id && p.nombre.toLowerCase() === updates.nombre.trim().toLowerCase())
       if (dup) return { error: { message: 'Ya existe un producto con ese nombre.' } }
     }
-    const { categoriaId, createdAt, ...rest } = updates
-    const payload = { ...rest }
-    if (categoriaId !== undefined) payload.categoria_id = categoriaId
-    const { error } = await supabase.from('productos').update(payload).eq('id', id)
-    if (!error) setProductos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
-    return { error }
+
+    const payload = { ...updates }
+    if (updates.categoriaId !== undefined) payload.categoria = updates.categoriaId
+    try {
+      await put(`/api/productos/${id}`, payload)
+      setProductos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err.message } }
+    }
   }
 
-  // hardDelete = true → eliminar permanentemente (solo si no tiene ventas)
-  // hardDelete = false → desactivar (soft delete)
   const deleteProducto = async (id, hardDelete = false) => {
-    if (hardDelete) {
-      // Verificar si el producto ha sido vendido alguna vez
-      const { data: vendido } = await supabase
-        .from('venta_productos')
-        .select('id')
-        .eq('producto_id', id)
-        .limit(1)
-      if (vendido && vendido.length > 0)
-        return { error: { message: 'No se puede eliminar: este producto ha sido vendido. Puedes desactivarlo.' } }
-
-      const { error } = await supabase.from('productos').delete().eq('id', id)
-      if (!error) setProductos(prev => prev.filter(p => p.id !== id))
-      return { error }
+    try {
+      if (hardDelete) {
+        await del(`/api/productos/${id}`)
+        setProductos(prev => prev.filter(p => p.id !== id))
+      } else {
+        await put(`/api/productos/${id}`, { activo: false })
+        setProductos(prev => prev.map(p => p.id === id ? { ...p, activo: false } : p))
+      }
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err.message } }
     }
-    const { error } = await supabase.from('productos').update({ activo: false }).eq('id', id)
-    if (!error) setProductos(prev => prev.map(p => p.id === id ? { ...p, activo: false } : p))
-    return { error }
   }
 
   return { productos, loading, error, addProducto, updateProducto, deleteProducto, refetch: fetchAll }
 }
+
+

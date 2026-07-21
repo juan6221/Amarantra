@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Modal from '../../../shared/components/Modal'
+import Modal from '../../../components/Modal'
 
 export default function ProductDetailModal({ producto, categorias = [], isOpen, onClose }) {
   const [activeImg, setActiveImg] = useState(0)
@@ -62,3 +62,5 @@ export default function ProductDetailModal({ producto, categorias = [], isOpen, 
     </Modal>
   )
 }
+
+
