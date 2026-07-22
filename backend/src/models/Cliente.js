@@ -1,14 +1,64 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../config/db.js'
 
-const clienteSchema = new mongoose.Schema({
-  nombre: { type: String, required: true, trim: true },
-  documento: { type: String, required: true, unique: true, trim: true },
-  email: { type: String, default: '', trim: true },
-  telefono: { type: String, default: '', trim: true },
-  direccion: { type: String, default: '', trim: true },
-  activo: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-})
+const Cliente = sequelize.define(
+  'Cliente',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    nombre: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      set(value) {
+        this.setDataValue('nombre', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    documento: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      set(value) {
+        this.setDataValue('documento', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    email: {
+      type: DataTypes.STRING,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('email', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    telefono: {
+      type: DataTypes.STRING,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('telefono', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    direccion: {
+      type: DataTypes.STRING,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('direccion', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: 'clientes',
+    timestamps: false,
+  }
+)
 
-const Cliente = mongoose.model('Cliente', clienteSchema)
 export default Cliente
+

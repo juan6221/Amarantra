@@ -5,7 +5,7 @@ import ConfirmDialog from '../../../components/ConfirmDialog'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 
 function ClienteForm({ initial, onSubmit, onCancel }) {
-  const [form, setForm] = useState(initial || { nombre: '', email: '', telefono: '', direccion: '', activo: true })
+  const [form, setForm] = useState(initial || { nombre: '', documento: '', email: '', telefono: '', direccion: '', activo: true })
   const [err, setErr]   = useState('')
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -20,6 +20,10 @@ function ClienteForm({ initial, onSubmit, onCancel }) {
       <div>
         <label className="block text-dark-200 text-sm font-medium mb-1">Nombre completo *</label>
         <input className="input-dark" value={form.nombre} onChange={e => set('nombre', e.target.value)} required placeholder="Nombre del cliente" />
+      </div>
+      <div>
+        <label className="block text-dark-200 text-sm font-medium mb-1">Documento (Cédula/RUT) *</label>
+        <input className="input-dark" value={form.documento || ''} onChange={e => set('documento', e.target.value)} required placeholder="Número de documento" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -176,6 +180,7 @@ export default function ClientesPage() {
             </div>
             <div className="bg-dark-800 rounded-lg p-4 space-y-3 text-sm">
               {[
+                ['Documento', modalDetail.documento || '—'],
                 ['Correo', modalDetail.email || '—'],
                 ['Teléfono', modalDetail.telefono || '—'],
                 ['Dirección', modalDetail.direccion || '—'],
@@ -209,5 +214,3 @@ export default function ClientesPage() {
     </div>
   )
 }
-
-

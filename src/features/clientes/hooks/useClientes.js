@@ -68,5 +68,3 @@ export function useClientes() {
 
   return { clientes, loading, error, addCliente, updateCliente, deleteCliente, toggleActivo, refetch: fetchAll }
 }
-
-

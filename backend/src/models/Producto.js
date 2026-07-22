@@ -1,15 +1,64 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../config/db.js'
 
-const productoSchema = new mongoose.Schema({
-  nombre: { type: String, required: true, trim: true },
-  descripcion: { type: String, default: '', trim: true },
-  precio: { type: Number, required: true, default: 0 },
-  stock: { type: Number, required: true, default: 0 },
-  categoria: { type: mongoose.Schema.Types.ObjectId, ref: 'Categoria', required: true },
-  imagenes: { type: [String], default: [] },
-  activo: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-})
+const Producto = sequelize.define(
+  'Producto',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    nombre: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      set(value) {
+        this.setDataValue('nombre', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    descripcion: {
+      type: DataTypes.STRING,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('descripcion', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    precio: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    stock: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    categoriaId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'categorias',
+        key: 'id',
+      },
+    },
+    imagenes: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: 'productos',
+    timestamps: false,
+  }
+)
 
-const Producto = mongoose.model('Producto', productoSchema)
 export default Producto
+

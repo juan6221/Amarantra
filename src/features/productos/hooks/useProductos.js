@@ -33,12 +33,12 @@ export function useProductos() {
       const payload = {
         ...prod,
         nombre: prod.nombre.trim(),
-        categoria: prod.categoriaId || prod.categoria,
+        categoriaId: prod.categoriaId,
       }
       const data = await post('/api/productos', payload)
       setProductos(prev => [...prev, {
         ...data,
-        categoriaId: data.categoria?._id,
+        categoriaId: data.categoria?._id || data.categoriaId,
         createdAt: data.createdAt,
         imagenes: data.imagenes || [],
       }])
@@ -55,7 +55,6 @@ export function useProductos() {
     }
 
     const payload = { ...updates }
-    if (updates.categoriaId !== undefined) payload.categoria = updates.categoriaId
     try {
       await put(`/api/productos/${id}`, payload)
       setProductos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
@@ -82,5 +81,3 @@ export function useProductos() {
 
   return { productos, loading, error, addProducto, updateProducto, deleteProducto, refetch: fetchAll }
 }
-
-

@@ -4,7 +4,7 @@ import { generateToken } from '../utils/generateToken.js'
 
 export async function register(req, res) {
   const { nombre, email, password, rol = 'user', telefono = '' } = req.body
-  const existingUser = await User.findOne({ email })
+  const existingUser = await User.findOne({ where: { email } })
   if (existingUser) {
     return res.status(400).json({ message: 'El correo ya está registrado' })
   }
@@ -14,7 +14,7 @@ export async function register(req, res) {
 
   res.status(201).json({
     user: {
-      id: user._id,
+      id: user.id,
       nombre: user.nombre,
       email: user.email,
       rol: user.rol,
@@ -26,7 +26,7 @@ export async function register(req, res) {
 
 export async function login(req, res) {
   const { email, password } = req.body
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ where: { email } })
   if (!user) {
     return res.status(401).json({ message: 'Credenciales incorrectas' })
   }
@@ -41,7 +41,7 @@ export async function login(req, res) {
 
   res.json({
     user: {
-      id: user._id,
+      id: user.id,
       nombre: user.nombre,
       email: user.email,
       rol: user.rol,
@@ -53,7 +53,7 @@ export async function login(req, res) {
 
 export async function recoverPassword(req, res) {
   const { email } = req.body
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ where: { email } })
   if (!user) {
     return res.status(404).json({ message: 'Usuario no encontrado' })
   }
@@ -70,7 +70,7 @@ export async function resetPassword(req, res) {
   if (!email || !password) {
     return res.status(400).json({ message: 'Email y contraseña son obligatorios' })
   }
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ where: { email } })
   if (!user) {
     return res.status(404).json({ message: 'Usuario no encontrado' })
   }

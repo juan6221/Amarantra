@@ -26,7 +26,14 @@ export const useAuthStore = create(
         set({ user: null, token: null, isAuthenticated: false })
       },
     }),
-    { name: 'amaranta-auth-v3' }
+    {
+  name: 'amaranta-auth-v3',
+  onRehydrateStorage: () => (state) => {
+    if (state?.token) {
+      setAuthToken(state.token)
+    }
+  },
+}
   )
 )
 

@@ -1,13 +1,13 @@
 import Role from '../models/Role.js'
 
 export async function getRoles(req, res) {
-  const roles = await Role.find()
+  const roles = await Role.findAll()
   res.json(roles)
 }
 
 export async function createRole(req, res) {
   const { nombre, descripcion } = req.body
-  const existing = await Role.findOne({ nombre })
+  const existing = await Role.findOne({ where: { nombre } })
   if (existing) {
     return res.status(400).json({ message: 'El rol ya existe' })
   }
@@ -18,7 +18,7 @@ export async function createRole(req, res) {
 
 export async function updateRole(req, res) {
   const { id } = req.params
-  const role = await Role.findById(id)
+  const role = await Role.findByPk(id)
   if (!role) {
     return res.status(404).json({ message: 'Rol no encontrado' })
   }
@@ -32,11 +32,11 @@ export async function updateRole(req, res) {
 
 export async function deleteRole(req, res) {
   const { id } = req.params
-  const role = await Role.findById(id)
+  const role = await Role.findByPk(id)
   if (!role) {
     return res.status(404).json({ message: 'Rol no encontrado' })
   }
 
-  await role.deleteOne()
+  await role.destroy()
   res.json({ message: 'Rol eliminado' })
 }

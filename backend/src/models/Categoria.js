@@ -1,11 +1,43 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../config/db.js'
 
-const categoriaSchema = new mongoose.Schema({
-  nombre: { type: String, required: true, unique: true, trim: true },
-  descripcion: { type: String, default: '', trim: true },
-  activo: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-})
+const Categoria = sequelize.define(
+  'Categoria',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    nombre: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      set(value) {
+        this.setDataValue('nombre', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    descripcion: {
+      type: DataTypes.STRING,
+      defaultValue: '',
+      set(value) {
+        this.setDataValue('descripcion', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: 'categorias',
+    timestamps: false,
+  }
+)
 
-const Categoria = mongoose.model('Categoria', categoriaSchema)
 export default Categoria
+

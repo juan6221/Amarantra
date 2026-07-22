@@ -3,34 +3,34 @@ import Categoria from '../models/Categoria.js'
 import Venta from '../models/Venta.js'
 
 export async function getProductos(req, res) {
-  const productos = await Producto.find().populate('categoria', 'nombre descripcion')
+  const productos = await Producto.findAll()
   res.json(productos)
 }
 
 export async function createProducto(req, res) {
-  const { nombre, descripcion, precio, stock, categoria, imagenes } = req.body
-  const categoriaExists = await Categoria.findById(categoria)
+  const { nombre, descripcion, precio, stock, categoriaId, imagenes } = req.body
+  const categoriaExists = await Categoria.findByPk(categoriaId)
   if (!categoriaExists) {
     return res.status(400).json({ message: 'Categoría inválida' })
   }
 
-  const producto = await Producto.create({ nombre, descripcion, precio, stock, categoria, imagenes })
+  const producto = await Producto.create({ nombre, descripcion, precio, stock, categoriaId, imagenes })
   res.status(201).json(producto)
 }
 
 export async function updateProducto(req, res) {
   const { id } = req.params
-  const producto = await Producto.findById(id)
+  const producto = await Producto.findByPk(id)
   if (!producto) {
     return res.status(404).json({ message: 'Producto no encontrado' })
   }
 
-  if (req.body.categoria) {
-    const categoriaExists = await Categoria.findById(req.body.categoria)
+  if (req.body.categoriaId) {
+    const categoriaExists = await Categoria.findByPk(req.body.categoriaId)
     if (!categoriaExists) {
       return res.status(400).json({ message: 'Categoría inválida' })
     }
-    producto.categoria = req.body.categoria
+    producto.categoriaId = req.body.categoriaId
   }
 
   producto.nombre = req.body.nombre ?? producto.nombre
@@ -45,16 +45,20 @@ export async function updateProducto(req, res) {
 
 export async function deleteProducto(req, res) {
   const { id } = req.params
-  const producto = await Producto.findById(id)
+  const producto = await Producto.findByPk(id)
   if (!producto) {
     return res.status(404).json({ message: 'Producto no encontrado' })
   }
 
-  const ventaExistente = await Venta.findOne({ 'items.producto': producto._id }).limit(1)
+  const ventas = await Venta.findAll()
+  const ventaExistente = ventas.some(venta =>
+    Array.isArray(venta.items) && venta.items.some(item => item.producto === id || item.producto === Number(id))
+  )
+
   if (ventaExistente) {
     return res.status(400).json({ message: 'No se puede eliminar: este producto ya fue vendido.' })
   }
 
-  await producto.deleteOne()
+  await producto.destroy()
   res.json({ message: 'Producto eliminado' })
 }

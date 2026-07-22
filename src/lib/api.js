@@ -38,8 +38,8 @@ export async function get(path) {
   return request(path, { method: 'GET' })
 }
 
-export async function post(path, body) {
-  return request(path, { method: 'POST', body, auth: false })
+export async function post(path, body, auth = true) {
+  return request(path, { method: 'POST', body, auth })
 }
 
 export async function put(path, body) {

@@ -1,21 +1,63 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../config/db.js'
 
-const ventaItemSchema = new mongoose.Schema({
-  producto: { type: mongoose.Schema.Types.ObjectId, ref: 'Producto', required: true },
-  cantidad: { type: Number, required: true, default: 1 },
-  precio: { type: Number, required: true, default: 0 },
-})
+const Venta = sequelize.define(
+  'Venta',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    clienteId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'clientes',
+        key: 'id',
+      },
+    },
+    usuarioId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    items: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: [],
+    },
+    total: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    pago: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    estado: {
+      type: DataTypes.STRING,
+      defaultValue: 'completada',
+    },
+    fecha: {
+      type: DataTypes.DATEONLY,
+      defaultValue: () => new Date().toISOString().split('T')[0],
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: 'ventas',
+    timestamps: false,
+  }
+)
 
-const ventaSchema = new mongoose.Schema({
-  cliente: { type: mongoose.Schema.Types.ObjectId, ref: 'Cliente' },
-  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  items: { type: [ventaItemSchema], required: true },
-  total: { type: Number, required: true, default: 0 },
-  pago: { type: Number, required: true, default: 0 },
-  estado: { type: String, default: 'completada' },
-  fecha: { type: String, default: () => new Date().toISOString().split('T')[0] },
-  createdAt: { type: Date, default: Date.now },
-})
-
-const Venta = mongoose.model('Venta', ventaSchema)
 export default Venta
+

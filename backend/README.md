@@ -1,6 +1,6 @@
 # Amaranta Backend
 
-Backend separado para el proyecto Amaranta, construido con Node.js, Express y MongoDB.
+Backend separado para el proyecto Amaranta, construido con Node.js, Express y PostgreSQL.
 
 ## Instalación
 
@@ -24,5 +24,5 @@ Backend separado para el proyecto Amaranta, construido con Node.js, Express y Mo
 
 ## Notas
 
-- La conexión a la base de datos se realiza con MongoDB usando `MONGO_URI`.
+- La conexión a la base de datos se realiza con PostgreSQL usando variables de entorno en `.env`.
 - El backend está separado del frontend en la carpeta `backend`.

@@ -2,7 +2,9 @@ import User from '../models/User.js'
 import bcrypt from 'bcryptjs'
 
 export async function getPerfil(req, res) {
-  const user = await User.findById(req.user._id).select('-password')
+  const user = await User.findByPk(req.user.id, {
+    attributes: { exclude: ['password'] }
+  })
   if (!user) {
     return res.status(404).json({ message: 'Perfil no encontrado' })
   }
@@ -10,13 +12,13 @@ export async function getPerfil(req, res) {
 }
 
 export async function updatePerfil(req, res) {
-  const user = await User.findById(req.user._id)
+  const user = await User.findByPk(req.user.id)
   if (!user) {
     return res.status(404).json({ message: 'Perfil no encontrado' })
   }
 
   if (req.body.email && req.body.email !== user.email) {
-    const exists = await User.findOne({ email: req.body.email })
+    const exists = await User.findOne({ where: { email: req.body.email } })
     if (exists) {
       return res.status(400).json({ message: 'El correo ya está en uso por otro usuario.' })
     }
@@ -38,7 +40,7 @@ export async function updatePerfil(req, res) {
 
   const updated = await user.save()
   res.json({
-    id: updated._id,
+    id: updated.id,
     nombre: updated.nombre,
     email: updated.email,
     rol: updated.rol,

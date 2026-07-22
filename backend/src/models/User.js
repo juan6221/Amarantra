@@ -1,40 +1,60 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../config/db.js'
 
-const userSchema = new mongoose.Schema({
-  nombre: {
-    type: String,
-    required: true,
-    trim: true,
+const User = sequelize.define(
+  'User',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    nombre: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      set(value) {
+        this.setDataValue('nombre', typeof value === 'string' ? value.trim() : value)
+      },
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      set(value) {
+        if (typeof value === 'string') {
+          this.setDataValue('email', value.trim().toLowerCase())
+        } else {
+          this.setDataValue('email', value)
+        }
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    rol: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'user',
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    telefono: {
+      type: DataTypes.STRING,
+      defaultValue: '',
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  rol: {
-    type: String,
-    required: true,
-    default: 'user',
-  },
-  activo: {
-    type: Boolean,
-    default: true,
-  },
-  telefono: {
-    type: String,
-    default: '',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-})
+  {
+    tableName: 'users',
+    timestamps: false,
+  }
+)
 
-const User = mongoose.model('User', userSchema)
 export default User
+

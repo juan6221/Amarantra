@@ -2,13 +2,13 @@ import Categoria from '../models/Categoria.js'
 import Producto from '../models/Producto.js'
 
 export async function getCategorias(req, res) {
-  const categorias = await Categoria.find()
+  const categorias = await Categoria.findAll()
   res.json(categorias)
 }
 
 export async function createCategoria(req, res) {
   const { nombre, descripcion } = req.body
-  const existing = await Categoria.findOne({ nombre })
+  const existing = await Categoria.findOne({ where: { nombre } })
   if (existing) {
     return res.status(400).json({ message: 'La categoría ya existe' })
   }
@@ -19,7 +19,7 @@ export async function createCategoria(req, res) {
 
 export async function updateCategoria(req, res) {
   const { id } = req.params
-  const categoria = await Categoria.findById(id)
+  const categoria = await Categoria.findByPk(id)
   if (!categoria) {
     return res.status(404).json({ message: 'Categoría no encontrada' })
   }
@@ -33,16 +33,16 @@ export async function updateCategoria(req, res) {
 
 export async function deleteCategoria(req, res) {
   const { id } = req.params
-  const categoria = await Categoria.findById(id)
+  const categoria = await Categoria.findByPk(id)
   if (!categoria) {
     return res.status(404).json({ message: 'Categoría no encontrada' })
   }
 
-  const producto = await Producto.findOne({ categoria: categoria._id })
+  const producto = await Producto.findOne({ where: { categoriaId: categoria.id } })
   if (producto) {
     return res.status(400).json({ message: 'No se puede eliminar: existen productos en esta categoría.' })
   }
 
-  await categoria.deleteOne()
+  await categoria.destroy()
   res.json({ message: 'Categoría eliminada' })
 }
