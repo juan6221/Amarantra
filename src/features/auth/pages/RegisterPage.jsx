@@ -3,16 +3,16 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../../../store/useStore'
 import AmarantaLogo from '../../../components/AmarantaLogo'
 
-export default function LoginPage() {
-  const [form, setForm] = useState({ email: '', password: '' })
+export default function RegisterPage() {
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', password: '', confirmar: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login, isAuthenticated } = useAuthStore()
+  const { register, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/app/dashboard', { replace: true })
+      navigate('/app/ventas', { replace: true })
     }
   }, [isAuthenticated, navigate])
 
@@ -20,14 +20,32 @@ export default function LoginPage() {
     return null
   }
 
+  const handleChange = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (form.password !== form.confirmar) {
+      setError('Las contraseñas no coinciden')
+      return
+    }
+    if (form.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
     setLoading(true)
-    const result = await login(form.email, form.password)
+    const result = await register({
+      nombre: form.nombre,
+      email: form.email,
+      telefono: form.telefono,
+      password: form.password,
+    })
     setLoading(false)
+
     if (result.success) {
-      navigate(result.user.rol === 'admin' ? '/app/dashboard' : '/app/ventas', { replace: true })
+      navigate('/app/ventas', { replace: true })
     } else {
       setError(result.error)
     }
@@ -62,19 +80,40 @@ export default function LoginPage() {
             <AmarantaLogo size="md" />
           </div>
 
-          <h2 className="font-serif text-2xl font-bold text-white mb-2">Bienvenido de vuelta</h2>
-          <p className="text-dark-300 text-sm mb-8">Ingresa tus credenciales para continuar.</p>
+          <h2 className="font-serif text-2xl font-bold text-white mb-2">Crea tu cuenta</h2>
+          <p className="text-dark-300 text-sm mb-8">Regístrate como cliente para continuar.</p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-dark-200 text-sm font-medium mb-2">Nombre completo</label>
+              <input
+                type="text"
+                value={form.nombre}
+                onChange={handleChange('nombre')}
+                className="input-dark"
+                placeholder="Tu nombre"
+                required
+              />
+            </div>
             <div>
               <label className="block text-dark-200 text-sm font-medium mb-2">Correo electrónico</label>
               <input
                 type="email"
                 value={form.email}
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                onChange={handleChange('email')}
                 className="input-dark"
                 placeholder="tucorreo@ejemplo.com"
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-dark-200 text-sm font-medium mb-2">Teléfono</label>
+              <input
+                type="tel"
+                value={form.telefono}
+                onChange={handleChange('telefono')}
+                className="input-dark"
+                placeholder="Opcional"
               />
             </div>
             <div>
@@ -82,7 +121,18 @@ export default function LoginPage() {
               <input
                 type="password"
                 value={form.password}
-                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                onChange={handleChange('password')}
+                className="input-dark"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-dark-200 text-sm font-medium mb-2">Confirmar contraseña</label>
+              <input
+                type="password"
+                value={form.confirmar}
+                onChange={handleChange('confirmar')}
                 className="input-dark"
                 placeholder="••••••••"
                 required
@@ -96,12 +146,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="flex justify-end">
-              <Link to="/recuperar-password" className="text-gold-400/70 hover:text-gold-400 text-xs transition-colors">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -113,23 +157,20 @@ export default function LoginPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Verificando...
+                  Creando cuenta...
                 </>
-              ) : 'Ingresar'}
+              ) : 'Crear cuenta'}
             </button>
           </form>
 
-          {/* Registro de cliente */}
-          <div className="mt-8 p-4 bg-dark-700 border border-dark-600 rounded-xl text-center">
-            <p className="text-dark-300 text-sm">
-              ¿Eres nuevo por aquí?{' '}
-              <Link to="/registro" className="text-gold-400 hover:text-gold-300 font-medium transition-colors">
-                Regístrate como cliente
-              </Link>
-            </p>
-          </div>
+          <p className="text-center mt-6 text-dark-300 text-sm">
+            ¿Ya tienes cuenta?{' '}
+            <Link to="/login" className="text-gold-400 hover:text-gold-300 font-medium transition-colors">
+              Inicia sesión
+            </Link>
+          </p>
 
-          <p className="text-center mt-6">
+          <p className="text-center mt-3">
             <Link to="/" className="text-gold-400/70 hover:text-gold-400 text-sm transition-colors">
               ← Volver al inicio
             </Link>

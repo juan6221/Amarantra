@@ -3,6 +3,7 @@ import { useAuthStore } from './store/useStore'
 
 import LandingPage          from './features/landing/pages/LandingPage'
 import LoginPage            from './features/auth/pages/LoginPage'
+import RegisterPage         from './features/auth/pages/RegisterPage'
 import RecuperarPasswordPage from './features/auth/pages/RecuperarPasswordPage'
 import AppLayout            from './components/AppLayout'
 import ProtectedRoute       from './components/ProtectedRoute'
@@ -28,6 +29,7 @@ export default function App() {
         {/* Público */}
         <Route path="/"                    element={<LandingPage />} />
         <Route path="/login"               element={<LoginPage />} />
+        <Route path="/registro"            element={<RegisterPage />} />
         <Route path="/recuperar-password"  element={<RecuperarPasswordPage />} />
 
         {/* App privada */}
@@ -67,5 +69,3 @@ export default function App() {
     </BrowserRouter>
   )
 }
-
-

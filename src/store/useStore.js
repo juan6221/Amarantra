@@ -21,6 +21,24 @@ export const useAuthStore = create(
         }
       },
 
+      register: async ({ nombre, email, password, telefono }) => {
+        try {
+          const { user, token } = await post('/api/auth/register', {
+            nombre,
+            email,
+            password,
+            telefono,
+            rol: 'cliente',
+          })
+          setAuthToken(token)
+          set({ user, token, isAuthenticated: true })
+          return { success: true, user }
+        } catch (error) {
+          const message = error.message || 'No se pudo crear la cuenta. Intenta de nuevo.'
+          return { success: false, error: message }
+        }
+      },
+
       logout: () => {
         clearAuthToken()
         set({ user: null, token: null, isAuthenticated: false })
@@ -47,5 +65,3 @@ useAuthStore.subscribe(
   },
   (state) => state.token
 )
-
-
