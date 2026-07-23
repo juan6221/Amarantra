@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize'
 import dotenv from 'dotenv'
+import 'mysql2'
 
 dotenv.config()
 
