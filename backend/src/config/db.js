@@ -30,7 +30,6 @@ const connectDB = async () => {
     console.log('Database models synchronized')
   } catch (error) {
     console.error('Error connecting to MySQL:', error.message)
-    process.exit(1)
   }
 }
 
