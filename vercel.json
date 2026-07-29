@@ -1,17 +1,8 @@
 {
-  "services": {
-    "frontend": {
-      "root": "./",
-      "framework": "vite"
-    },
-    "backend": {
-      "root": "backend/",
-      "framework": "express"
-    }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": { "service": "backend" } },
-    { "source": "/assets/(.*)", "destination": { "service": "frontend" } },
-    { "source": "/(.*)", "destination": { "service": "frontend", "path": "/index.html" } }
+  "builds": [
+    { "src": "src/server.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "src/server.js" }
   ]
 }
